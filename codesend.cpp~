@@ -205,7 +205,6 @@ int main(int argc, char *argv[])
 	    pulseLength=VerrouDebutSignal.DureeLOW/31
 		Codage d'un 1 : HIGH[3*pulseLength] --> LOW[1*pulseLength]
 		Codage d'un 0 : HIGH[1*pulseLength] --> LOW[3*pulseLength]
-		VerrouFinSignal = HIGH[200us] --> LOW[11165 +- 100 us]
 	    
 		Pour émuler bouton D de la télécommande qui pilote le tripe interrupteur tactile													sudo ./codesend64 -protocol=1 -repeat=10 -pin=0 -dec=3258513 -nbbit=24
 		Pour émuler bouton B de la télécommande qui pilote le tripe interrupteur tactile													sudo ./codesend64 -protocol=1 -repeat=10 -pin=0 -dec=3258516 -nbbit=24
@@ -221,7 +220,7 @@ int main(int argc, char *argv[])
 	    pulseLength=VerrouDebutSignal.DureeLOW/31
 		Codage d'un 1 : HIGH[3*pulseLength] --> LOW[1*pulseLength]
 		Codage d'un 0 : HIGH[1*pulseLength] --> LOW[3*pulseLength]
-		VerrouFinSignal = HIGH[200us] --> LOW[13318 +- 100 us]
+		VerrouFinSignal = HIGH[200us] --> LOW[13318us]
 
 		Categorie1 BTN1 ON/OFF			1381717/1381716			00010101 00010101 01010101 / 00010101 00010101 01010100
 		Categorie1 BTN2 ON/OFF			1394005/1394004			00010101 01000101 01010101 / 
