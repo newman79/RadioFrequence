@@ -1,4 +1,4 @@
-all:  codesend RFSniffer 
+all:  radioReception codesend RFSniffer 
 
 
 codesend: RCSwitch.o codesend.o
