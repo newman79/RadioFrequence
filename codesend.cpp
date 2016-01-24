@@ -191,8 +191,8 @@ int main(int argc, char *argv[])
 	    			Remarque : lors de l'analyse, 1er bit du signal =   HIGH[140us] --> LOW[305us]    (le high de tous les autres bit dure toujours 250 us)
 	    								mais un send avec 1er bit = HIGH[250us] --> LOW[305us]    marche bien avec le matériel
 	    			
-		Signal ON 	: 		manchester(64 bits)   	1001101001011010010110011010011001010101010101100110 100110101010     	true code(32 bits)=10110011001011010000000101101111
-		Signal OFF 	:		manchester(64 bits) 		1001101001011010010110011010011001010101010101100110 101010101010		true code(32 bits)=10110011001011010000000101111111
+		Signal ON 	: 		manchester(64 bits)   	1001101001011010010110011010011001010101010101100110100110101010     	true code(32 bits)=10110011001011010000000101101111
+		Signal OFF 	:		manchester(64 bits) 	1001101001011010010110011010011001010101010101100110101010101010		true code(32 bits)=10110011001011010000000101111111
 		Pour envoyer le signal qui émule un appui sur le 1 de l'interrupteur : 																		sudo ./codesend64 -protocol=3 -repeat=10 -pin=0 -bin=1001101001011010010110011010011001010101010101100110100110101010		
 			ou
 			sudo ./codesend64 -protocol=3 -repeat=10 -pin=0 -manchbin=10110011001011010000000101101111			
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 		
 		
 	-------------------------- Protocol 1 : Triple interrupteur sans fil 1 marque FUNRY --------------------------	
-	    VerrouDebutSignal = HIGH[200us] --> LOW[11165us] --> Signal sur 24 bits non --> Verrou de fin ?
+	    VerrouDebutSignal = HIGH[200us] --> LOW[11165us] --> Signal sur 24 bits --> Verrou de fin ?
 	    pulseLength=VerrouDebutSignal.DureeLOW/31
 		Codage d'un 1 : HIGH[3*pulseLength] --> LOW[1*pulseLength]
 		Codage d'un 0 : HIGH[1*pulseLength] --> LOW[3*pulseLength]
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
 		
 		
 	-------------------------- 	Protocol 1 : Prise CHACON -------------------------- 
-	    VerrouDebutSignal = HIGH[200us] --> LOW[13318us] --> Signal sur 24 bits non --> Verrou de fin ?
+	    VerrouDebutSignal = HIGH[200us] --> LOW[13318us] --> Signal sur 24 bits --> Verrou de fin ?
 	    pulseLength=VerrouDebutSignal.DureeLOW/31
 		Codage d'un 1 : HIGH[3*pulseLength] --> LOW[1*pulseLength]
 		Codage d'un 0 : HIGH[1*pulseLength] --> LOW[3*pulseLength]
