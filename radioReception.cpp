@@ -26,6 +26,8 @@ Lancer le programme via la commande :
 #include <sched.h>
 #include <sstream>
 #include <map>
+#include <unistd.h>
+#include <stdint.h>
 
 using namespace std;
 
@@ -363,6 +365,16 @@ int main (int argc, char** argv)
 				unsigned long manchesterCodedBit;				
 				code = 0;
 				manchesterDecodedSignal = "";
+				uint64_t rawdecimal=0;
+				
+				for (int k=0;k<i;k++)
+				{
+					rawdecimal <<= 1;
+					if (signalbit[k]==1)
+						rawdecimal += 1ll;
+				}
+				
+				
 				for (int k=0;k<i;k+=2)
 				{
 					if (signalbit[k] ^ signalbit[k+1] == 0)  /* doit être 01 ou 10,pas 00 ou 11 sinon ou coupe la detection, c'est un parasite */ 
@@ -373,13 +385,15 @@ int main (int argc, char** argv)
 					else 
 					{
 						if (signalbit[k] == 1)				manchesterCodedBit = 1;
-						else											manchesterCodedBit = 0;
+						else								manchesterCodedBit = 0;
 						manchesterDecodedSignal.append(longToString(manchesterCodedBit));
 						code <<= 1;
 						code += manchesterCodedBit;
 					}
 				}
-				otrace << " decoded : manchester code=" << manchesterDecodedSignal << " decimal=" << code << endl;
+				otrace << " decoded : manchester code=" << manchesterDecodedSignal << " decimal=" << code << " rawdecimal=" << rawdecimal << endl;
+				
+				
 				trace(otrace, 2);
 			}
 			else

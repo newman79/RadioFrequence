@@ -54,5 +54,20 @@ int main(int argc, char **argv)
 	// If we want to print JSON is as easy as doing:
 	cout<<"Json Example pretty print: " << endl << root.toStyledString() << endl;
 
+
+	const Json::Value protocole1 = root["protocole1"];
+	if(not protocole1.isNull())
+	{
+		const Json::Value protocole1_endlock_highlow__NbPulseLength = protocole1["OneEncoding_highlow_NbPulseLength"];
+		if (not protocole1_endlock_highlow__NbPulseLength.isNull() && protocole1_endlock_highlow__NbPulseLength.isArray())
+		{
+			for(unsigned int index=0; index<protocole1_endlock_highlow__NbPulseLength.size(); ++index)  
+			{  
+				cout<<"Element " << index <<" of OneEncoding_highlow_NbPulseLength : " << protocole1_endlock_highlow__NbPulseLength[index].asString() << endl;
+			}
+		}
+	}
+
+
 	return 0;
 }
