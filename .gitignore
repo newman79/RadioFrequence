@@ -1,0 +1,8 @@
+*.o
+*~
+radioReception
+RFReceptHandler
+RFSendRemoteBtnCode
+RFSend
+testJson
+testJson
