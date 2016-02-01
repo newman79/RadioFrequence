@@ -9,10 +9,13 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
+#include <sys/types.h>
+#include <unistd.h>
        
 RCSwitch mySwitch;
  
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+{
   
      // This pin is not the first pin on the RPi GPIO header!
      // Consult https://projects.drogon.net/raspberry-pi/wiringpi/pins/
@@ -25,30 +28,6 @@ int main(int argc, char *argv[]) {
 	mySwitch = RCSwitch();
 	mySwitch.enableReceive(PIN);  // Receiver on inerrupt 0 => that is pin #2
 
-/*
-uint64_t value = 1;
-value = value << 1;
-value = value << 1;
-value = value << 1;
-
-std::cout << value << std::endl;
-return 0;
-*/
-
-/*
-//RFSniffer 	 0001101010011010100110100110010110010101101010100110101010101001 										1917014352492915369
-//radioReception 1001101010011010100110100110010110010101101010100110101010101001  10111011101101001000111101111110    11140386389347691177
-  
-  * 
-	uint64_t aa=1917014352492915369;  
-				1917014352492915369
-  
-	printf("aaa  %s \n",RCSwitch::dec2binWzerofill(1917014352492915369,64));
-	printf("zaeaz  %s \n",RCSwitch::dec2binWzerofill(1917014352492915369,64));
-	printf("eazeaz  %s \n",RCSwitch::dec2binWzerofill(1917014352492915369,64));
-	return 0;
-*/
-     
 	while(1)  
 	{ 
 		if (mySwitch.available()) 
@@ -60,7 +39,10 @@ return 0;
 				printf("Unknown encoding\n");
 			} 
     	    else 
-			{   
+			{
+				printf ( "CRFReceptHandler.getpid = %d\n", getpid());				
+				//std::cout << "RFReceptHandler.getpid=" << getpid << std::endl;
+				
 				unsigned long bitLength 	= mySwitch.getReceivedBitlength();
 				unsigned long delay 		= mySwitch.getReceivedDelay();
 				unsigned int protocol 		= mySwitch.getReceivedProtocol();

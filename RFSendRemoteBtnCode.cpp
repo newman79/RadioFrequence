@@ -23,6 +23,8 @@
 using namespace std;
 using namespace Json;
 
+#define INVALIDE_REMOTE_PROP 	" Invalid remote properties for remote: "
+
 
 std::map<std::string, std::string> commandArgs;
 
@@ -95,6 +97,14 @@ char* dec2binWzerofill(uint64_t dec, unsigned int bitLength)
 	return paddedBinToReturn;
 }
 
+/* ----------------------------------------------------------------------------------------------------------- */
+int loglevel = 1;
+// Fonction de trace
+void trace(int level, const char * msg)
+{
+	if (loglevel <= level)	{cout << "[" << level << "] " << msg << endl;}
+}
+
 /* ---------------------------------------------------------------- */
 string intToString(int mylong)
 {
@@ -141,36 +151,32 @@ int parseCommandLineArgs(int nbArgs, char ** args)
 /* ---------------------------------------------------------------- */
 void displayCommandLineArgs()
 {
-	cout << "------------------------------------------------------------------------------------" << endl;
-	cout << "------------------------ CommandLine Arguments -------------------" << endl;
-	for (std::map<std::string,std::string>::iterator it=commandArgs.begin(); it!=commandArgs.end(); ++it)
+	if (loglevel <= 0)
 	{
-    	cout << it->first << " => " << it->second << endl;
+		cout << "-----------------------------------------------------------------------" << endl;
+		cout << "-                     CommandLine Arguments                            " << endl;
+		for (std::map<std::string,std::string>::iterator it=commandArgs.begin(); it!=commandArgs.end(); ++it)
+		{
+			cout << it->first << " => " << it->second << endl;
+		}
+		cout << "-----------------------------------------------------------------------" << endl;
 	}
-	cout << "------------------------------------------------------------------------------------" << endl;
 }
-
 
 /* ---------------------------------------------------------------- */
 void diplayRemotes()
 {
-	cout << "Available remote are the following : " << endl;
 	Value::Members members = jsonRoot.getMemberNames();
 	for (std::vector<string>::iterator it = members.begin(); it != members.end(); ++it) 
-	{
 		if (string::npos != (*it).find("remote_"))
 			cout << "  " << *it << endl;
-	}
 }
 
 /* ---------------------------------------------------------------- */
 void diplayButtonsForRemote(Value::Members & membersOfSignals)
 {
-	cout << "Available remote are the following : " << endl;
 	for (std::vector<string>::iterator it = membersOfSignals.begin(); it != membersOfSignals.end(); ++it) 
-	{
 		cout << "  " << *it << endl;
-	}
 }
 
 
@@ -178,22 +184,10 @@ void diplayButtonsForRemote(Value::Members & membersOfSignals)
 int main(int argc, char *argv[]) 
 {  
     parseCommandLineArgs(argc, argv);
-	displayCommandLineArgs();
 	
 	ifstream jsonFile;
 	string rfJsonFilePath = "./radioFrequenceSignalConfig.json";
-	jsonFile.open(rfJsonFilePath.c_str());
-		
-	//bool parsedSuccess = reader.parse(json_example, root, false);
-	bool parsedResult = jsonReader.parse(jsonFile, jsonRoot, false);
-	jsonFile.close();
-	
-	if(!parsedResult) // Report failures and their locations in the document.
-	{
-		cout << "Echec d'analyse du fichier " << rfJsonFilePath << " : " << endl << jsonReader.getFormatedErrorMessages() << endl;
-		return 1;
-	}
-	
+
 	int repeat				= 10;	
 	int protocol			= 1;	
 	int pin					= 0;
@@ -208,6 +202,29 @@ int main(int argc, char *argv[])
    	string binarycode		= "";	
     	
 	std::map<std::string,std::string>::iterator it;
+
+	it = commandArgs.find("lev");
+	if( commandArgs.find("lev") != commandArgs.end()) loglevel=atoi(it->second.c_str());
+
+	if( commandArgs.find("listremotes") == commandArgs.end() && commandArgs.find("getremotebuttons") == commandArgs.end() )
+		displayCommandLineArgs();
+	
+	it = commandArgs.find("jsonconf");
+	if(it != commandArgs.end())		rfJsonFilePath=commandArgs["jsonconf"].c_str();
+	// chargement de la conf (fichier json contenant toutes les infos des télécommandes radiofréquence)
+	jsonFile.open(rfJsonFilePath.c_str());		
+	bool parsedResult = jsonReader.parse(jsonFile, jsonRoot, false);
+	jsonFile.close();
+	if(!parsedResult) // Report failures and their locations in the document.
+	{
+		string str = "Echec d'analyse du fichier " + rfJsonFilePath + " : \n" + jsonReader.getFormatedErrorMessages() + "\n";
+		trace(3,str.c_str());		
+		return 1;
+	}
+
+	it = commandArgs.find("listremotes");
+	if( commandArgs.find("listremotes") != commandArgs.end()) {diplayRemotes(); return 0;}
+
 	it = commandArgs.find("repeat");
 	if(it != commandArgs.end())		repeat=atoi(commandArgs["repeat"].c_str());
 	
@@ -215,7 +232,7 @@ int main(int argc, char *argv[])
 	if(it != commandArgs.end())		remote=commandArgs["remote"];
 	else
 	{
-		cout << "Parameter remote must be set (-remote=<value>) with one of the following values" << endl;
+		trace(3,"Parameter remote must be set (-remote=<value>) with one of the following values");
 		diplayRemotes();
 		return 1;
 	}
@@ -231,7 +248,7 @@ int main(int argc, char *argv[])
     Json::Value remoteNode = jsonRoot[remote];    
     if (remoteNode.isNull())
     {
-		cout << "Unknown remote" << endl;
+		trace(3,"Unknown remote");
 		diplayRemotes();
 		return 2;
 	}
@@ -239,16 +256,17 @@ int main(int argc, char *argv[])
     Json::Value protocolNode 		= remoteNode["protocol"];
     if (protocolNode.isNull() || !protocolNode.isInt())
     {
-		cout << " Invalid remote properties : for remote:" << remote << " 'protocol' is not set or is not an integer";
+		string str = INVALIDE_REMOTE_PROP + remote + " 'protocol' is not set or is not an integer";
+		trace(3, str.c_str());
 		return 3;
 	}
     else  {protocol 		= protocolNode.asInt();}
     
-    
     Json::Value pulseLengthNode 	= remoteNode["pulseLength"];
     if (pulseLengthNode.isNull()) 	
     {
-		cout << " Invalid remote properties : for remote:" << remote << " 'protocol' is not set or is not an integer";
+		string str = INVALIDE_REMOTE_PROP + remote + " 'pulseLength' is not set or is not an integer";
+		trace(3, str.c_str());
 		return 4;
 	}
     else 							pulseLength 	= pulseLengthNode.asInt();
@@ -260,16 +278,21 @@ int main(int argc, char *argv[])
     Json::Value signalsNode = remoteNode["signals"];
     if (signalsNode.isNull()) 		
     {
-		cout << " Invalid remote properties : for remote:" << remote << " 'signals' is not or not correctly set";
+		string str = INVALIDE_REMOTE_PROP + remote + " 'signals' is not or not correctly set";
+		trace(3, str.c_str());
 		return 5;
 	}
     else 							
     {
 		Value::Members membersOfSignals = signalsNode.getMemberNames();		
+		it = commandArgs.find("getremotebuttons");
+		if( commandArgs.find("getremotebuttons") != commandArgs.end() )		
+			{diplayButtonsForRemote(membersOfSignals); return 0;}
+		
 		it = commandArgs.find("btn");
 		if(it == commandArgs.end())	
 		{
-			cout << "Parameter 'btn' must be set (-btn=<value>) with one of the following values" << endl;
+			trace(3, "Parameter 'btn' must be set (-btn=<value>) with one of the following values");
 			diplayButtonsForRemote(membersOfSignals);
 			return 6;
 		}
@@ -279,21 +302,24 @@ int main(int argc, char *argv[])
 			jsonSignal = signalsNode[btnName];
 			if (jsonSignal.isNull())									
 			{
-				cout << " Invalid remote properties for remote:" << remote << " button:" << btnName << " Signal code is not set" << endl;
+				string str = INVALIDE_REMOTE_PROP + remote + " button:" + btnName + " Signal code is not set";
+				trace(3, str.c_str());
 				return 7;
 			}
 			else if (!jsonSignal.isArray() && (!jsonSignal.isInt())) 	
 			{
-				cout << " Invalid remote properties for remote:" << remote << " button:" << btnName << " Signal code is neither an array nor an integer" << endl;
+				string str = INVALIDE_REMOTE_PROP + remote + " button:" + btnName + " Signal code is neither an array nor an integer";
+				trace(3, str.c_str());
 				return 8;
 			}
 		}
 	}
 
+
 	// Assertion sur signalBitNumberNode!=0 ou jsonSignal.isArray()
 	if (signalBitNumber == 0 && !jsonSignal.isArray() )
 	{
-		cout << "Propeties of remote are invalid : either 'signalBitNumberNode' must be set or each button signal must be an array of bit values (0,1) " << endl;
+		trace(3, "Propeties of remote are invalid : either 'signalBitNumberNode' must be set or each button signal must be an array of bit values (0,1) ");
 		return 9;
 	}
 
@@ -302,7 +328,8 @@ int main(int argc, char *argv[])
 	Json::Value protocoleInfoNode = jsonRoot[protocole];
 	if (protocoleInfoNode.isNull())
 	{
-		cout << " Invalid remote properties for remote: " << remote << " : remote protocol '" << protocole << "' doesn't exist in declared protocols " << endl;
+		string str = INVALIDE_REMOTE_PROP + remote + " : remote protocol '" + protocole	+ "' doesn't exist in declared protocols ";
+		trace(3, str.c_str());
 		return 10;
 	}
 
@@ -327,7 +354,8 @@ int main(int argc, char *argv[])
 	{
 		if (!startlock_highlowNode.isArray() || startlock_highlowNode.size() != 2)
 		{
-			cout << " Invalid remote properties for remote '" << remote << "' : startlock_highlow is not an array or is not well set";
+			string str = INVALIDE_REMOTE_PROP + remote + "' : startlock_highlow is not an array or is not well set";
+			trace(3, str.c_str());
 			return 10;
 		}
 		else
@@ -341,7 +369,8 @@ int main(int argc, char *argv[])
 		Json::Value startlock_highlowNode =  protocoleInfoNode["startlock_low_NbPulseLength"];
 		if (startlock_highlowNode.isNull()) 	
 		{
-			cout << " Invalid remote properties for remote '" << remote << "' : startlock_highlow array is neither set in btn, nor in protocol"  << endl;
+			string str = INVALIDE_REMOTE_PROP + remote + "' : startlock_highlow array is neither set in btn, nor in protocol";
+			trace(3, str.c_str());
 			return 11;
 		}
 		else if (startlock_highlowNode.isDouble())
@@ -351,18 +380,20 @@ int main(int argc, char *argv[])
 		}
 		else // must be an integer
 		{
-			cout << " Invalid remote properties for remote '" << remote << "' : startlock_highlow must be an integer"  << endl;
+			string str = INVALIDE_REMOTE_PROP + remote + "' : startlock_highlow must be an integer";
+			trace(3, str.c_str());
 			return 12;
 		}
 	}
-	
+
 	//------------------ Getting End lock HIGH-->LOW pulses ---------//
 	Json::Value  endlock_highlowNode 	= remoteNode["endlock_highlow"];
 	if (!endlock_highlowNode.isNull())
 	{
 		if (!endlock_highlowNode.isArray() || endlock_highlowNode.size() != 2)
 		{
-			cout << " Invalid remote properties : for remote '" << remote << "' : startlock_highlow is not an array or is not well set";
+			string str = INVALIDE_REMOTE_PROP + remote + "' : endlock_highlow is not an array or is not well set";
+			trace(3, str.c_str());
 			return 13;
 		}
 		else
@@ -376,7 +407,8 @@ int main(int argc, char *argv[])
 		Json::Value endlock_highlowNode =  protocoleInfoNode["endlock_low_NbPulseLength"];
 		if (endlock_highlowNode.isNull()) 	
 		{
-			cout << " Invalid remote properties for remote '" << remote << "' : endlock_highlow array is neither set in btn, nor in protocol"  << endl;
+			string str = INVALIDE_REMOTE_PROP + remote + "' : endlock_highlow array is neither set in btn, nor in protocol";
+			trace(3, str.c_str());
 			return 14;
 		}
 		else if (endlock_highlowNode.isDouble())
@@ -386,11 +418,12 @@ int main(int argc, char *argv[])
 		}
 		else // must be an integer
 		{
-			cout << " Invalid remote properties for remote '" << remote << "' : endlock_highlow must be an integer"  << endl;
+			string str = INVALIDE_REMOTE_PROP + remote + "' : endlock_highlow must be an integer";
+			trace(3, str.c_str());
 			return 15;
 		}
 	}	
-	
+
 	//------------------ Getting zeroEncodingInNbPulse HIGH-->LOW pulses ---------//
 	Json::Value  protocol_zeroEncodingInNbPulseNode = protocoleInfoNode["ZeroEncoding_highlow_NbPulseLength"];
 	Json::Value  zeroEncodingInNbPulseNode 			= remoteNode["ZeroEncodingInNbPulse"];
@@ -406,7 +439,8 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		cout << " Invalid remote properties for remote: " << remote << " : 'zeroEncoding_highlow' parameter must be an array and must be set either in 'remote node' or in 'protocol' node"  << endl;
+		string str = INVALIDE_REMOTE_PROP + remote + " : 'zeroEncoding_highlow' parameter must be an array and must be set either in 'remote node' or in 'protocol' node";
+		trace(3, str.c_str());
 		return 16;
 	}
 	
@@ -425,7 +459,8 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		cout << " Invalid remote properties for remote: " << remote << " : 'oneEncoding_highlow' parameter must be an array and must be set in 'remote node' or in 'protocol' node"  << endl;
+		string str = INVALIDE_REMOTE_PROP + remote + " : 'oneEncoding_highlow' parameter must be an array and must be set in 'remote node' or in 'protocol' node";
+		trace(3, str.c_str());
 		return 17;
 	}
 
@@ -452,7 +487,8 @@ int main(int argc, char *argv[])
 	    	else if (remotecode[i]=='1')		binarycode.append("10");
 	    	else 
 	    	{
-	    		cout << " Invalid manchester coded signal : " << remotecode << endl;
+				string str = " Invalid manchester coded signal : ";  str += remotecode;
+	    		trace(3, str.c_str());
 	    		return 18;
 	    	}
     	}
@@ -469,18 +505,20 @@ int main(int argc, char *argv[])
 	mySwitch.setSendStartLockHighLowInNbPulse(startlock_highlow[0]/pulseLength, startlock_highlow[1]/pulseLength);
 	mySwitch.setSendEndLockHighLowInNbPulse(endlock_highlow[0]/pulseLength, endlock_highlow[1]/pulseLength);
 
-
-	cout << "> Sending raw code = '" << remotecode << "' > " << endl;
-	cout << "  Number of bit   	= " 	<< strlen(remotecode) << endl;
-	cout << "  Manchester   		= " 	<< isManchesterCoded << endl;
-	cout << "  Protocole 		= " 		<< protocol	<< endl;
-	cout << "  ZeroEncoding 		= " 	<< zeroEncoding_highlow[0] 	<< "," << zeroEncoding_highlow[1] 	<< endl;
-	cout << "  OneEncoding  		= " 	<< oneEncoding_highlow[0] 	<< "," << oneEncoding_highlow[1] 	<< endl;
-	cout << "  StartLock    		= " 	<< startlock_highlow[0] 	<< "," << startlock_highlow[1] 		<< endl;
-	cout << "  EndLock   	   	= " 	<< endlock_highlow[0] 		<< "," << endlock_highlow[1] 		<< endl;
-	cout << "  Repeat	     	= " 	<< repeat 		<< endl;
-	
-	cout << mySwitch.computeAndDisplaySignalToSend(remotecode);
+	cout << "> Sending raw code = '"<< remotecode << "' > " << endl;
+	if (loglevel <= 1)
+	{
+		cout << "  Number of bit    = " << strlen(remotecode) << endl;
+		cout << "  Manchester       = " << isManchesterCoded << endl;
+		cout << "  Protocole        = " << protocol	<< endl;
+		cout << "  ZeroEncoding     = " << zeroEncoding_highlow[0] 	<< "," << zeroEncoding_highlow[1] 	<< endl;
+		cout << "  OneEncoding      = " << oneEncoding_highlow[0] 	<< "," << oneEncoding_highlow[1] 	<< endl;
+		cout << "  StartLock        = " << startlock_highlow[0] 	<< "," << startlock_highlow[1] 		<< endl;
+		cout << "  EndLock          = " << endlock_highlow[0] 		<< "," << endlock_highlow[1] 		<< endl;
+		cout << "  Repeat           = " << repeat 		<< endl;
+	}
+	if (loglevel <= 0)
+		cout << mySwitch.computeAndDisplaySignalToSend(remotecode);
 	
 	
 	mySwitch.send(remotecode);

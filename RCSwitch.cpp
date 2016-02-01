@@ -25,7 +25,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstring>
-
+#include <sys/types.h>
+#include <unistd.h>
 
 uint64_t 	RCSwitch::nReceivedValue 		= 0;
 unsigned int RCSwitch::nReceivedBitlength 	= 0;
@@ -297,37 +298,43 @@ unsigned int* RCSwitch::getReceivedRawdata() 	{return RCSwitch::timings;}
 /** ________________________________________________________________________________________________________________________________________________________  */
 bool RCSwitch::processSignal(unsigned int changeCount)
 {
-    unsigned long delay = RCSwitch::timings[0] / 1;
+	printf ( "processSignal.getpid = %d\n", getpid());				
+//	std::cout << "processSignal.getpid=" << getpid << std::endl;
+	
+    unsigned long delay = RCSwitch::timings[0];
 	uint64_t code = 0;
+	
 	if (RCSwitch::timings[changeCount+1] > 30000 ) // si (verrou de fin du signal).low > 30000 alors on considère que le signal est mauvais
 	{
 		RCSwitch::nReceivedValue 		= code;
 		return false;
 	}
-	RCSwitch::nReceivedBitlength 	= changeCount/2;
-	if (RCSwitch::nReceivedBitlength % 8 != 0) // si le nombre de bit du code n'est pas un multiple de 8, idem
-	{
-		RCSwitch::nReceivedValue 		= code;
-		return false;
-	}
 	
-    for (int i = 1; i<changeCount ; i=i+2) 
-    {
-		if (RCSwitch::timings[i] < 100 || RCSwitch::timings[i+1] < 100) // si c'est le cas, il y a peu de risque que le signal soit valide
+	RCSwitch::nReceivedBitlength 	= changeCount/2;
+	
+	std::cout << "delay=" << delay << std::endl;
+	if (delay > 4100 || delay < 3900) // hors plage télécommande ATI Wonder
+	{
+		for (int i = 1; i<changeCount ; i=i+2) 
 		{
-			code = 0;
-			break;
-		}
-		if (RCSwitch::timings[i+1] /* low */ > 700)
-		{
-			code = code << 1;
-		}
-		else
-		{
-			code = code << 1;
-			code+=1;
+			if (RCSwitch::timings[i] < 100 || RCSwitch::timings[i+1] < 100) // si c'est le cas, il y a peu de risque que le signal soit valide
+			{
+				code = 0;
+				break;
+			}
+			if (RCSwitch::timings[i+1]> 700) 	{code = code << 1;}
+			else								{code = code << 1;code+=1;}
 		}
 	}
+	else // hors plage télécommande ATI Wonder : 21 bits
+	{
+		for (int i = 1; i<changeCount ; i=i+2) 
+		{
+			if (RCSwitch::timings[i]> 1300) {code = code << 1;code+=1;}
+			else							code = code << 1;
+		}
+	}
+
 	//code = code >> 1;		
     if (changeCount > 6)  // ignore < 4bit values as there are no devices sending 4bit values => noise
     {
@@ -338,31 +345,38 @@ bool RCSwitch::processSignal(unsigned int changeCount)
     return code!=0;
 }
 
-/** Function called by a wiringPi thread at each data pin value change */
+/** 
+ * Function called by a wiringPi thread at each data pin value change 
+ * La fonction wiringPiISR est une fonction permettant de définir un code d'interruption, en l'occurence RCSwitch::handleInterrupt
+ * Ce code met l'exécution du programme principal (RFReceptHandler.main) en attente à chaque besoin d'interruption recensé par la librairie wiringPi
+ * Ainsi, à chaque interruption telle que définie, la librairie wiringPi gère : 
+ *    - La mise en attente du code principal (RFReceptHandler.main) : le processeur est libéré pour exécuter autre chose, ici le code d'interruption
+ *    - L'exécution du code d'interruption (RCSwitch::handleInterrupt)
+ *    - La réactivation du code principal, là où il en était précédemment
+ * 	Au final, on en déduit que aucune invocation de processSignal mettant à jour le code du signal recu ne sera perdu par RFReceptHandler.main ;
+ *  RFReceptHandler.main consommera alors le code signal recu et le remettra à 0.
+ */
 void RCSwitch::handleInterrupt() 
 {
 	static unsigned int 	duration;
 	static unsigned long 	lastTime;
 	static unsigned int 	repeatCount;
-	//  static unsigned int changeCount;
 
 	long time = micros();
 	duration = time - lastTime;
 	
+	// Todo : il faudrait faire une hasmap duration --> 0 et 1 high-->low encoding. Ca permettrait de mieux valider le signal
 	if (duration > 2750) 
 	{    
 		if (duration > RCSwitch::timings[0] - 100 /*&& duration < RCSwitch::timings[0] + 200*/)
 		{
 			repeatCount++;
-			changeCount--; // pour ramener changeCount à l'index 0 si début signal dernier bit recu afin d'analyser correctement le signal
+			changeCount--; // pour ramener changeCount à l'index 0 si début signal, ou au dernier bit recu afin d'analyser correctement le signal
 
 			if (repeatCount == 2)  // ça signifie qu'on a recu au moins 1 fois le signal : verrou de début et verrou de fin
 			{
 				RCSwitch::timings[changeCount+1] = duration;
-				if (!processSignal(changeCount))
-				{
-					//failed
-				}
+				if (!processSignal(changeCount)) {}
 				repeatCount = 0;
 			}
 		}

@@ -141,8 +141,8 @@ void displayCommandLineArgs()
 {
 	cout << "------------------------------------------------------------------------------------" << endl;
 	cout << "------------------------ CommandLine Arguments -------------------" << endl;
-	for (std::map<std::string,std::string>::iterator it=commandArgs.begin(); it!=commandArgs.end(); ++it)
-	{
+	for (std::map<std::string,std::string>::iterator it=commandArgs.begin(); it!=commandArgs.end(); )
+	{		
     	cout << it->first << " => " << it->second << endl;
 	}
 	cout << "------------------------------------------------------------------------------------" << endl;
