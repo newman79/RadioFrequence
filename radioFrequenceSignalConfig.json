@@ -27,24 +27,52 @@
 	//----------------------------------------------------------------------------------------------------------//
 	// DEFINITION DES TELECOMMANDES
 	//----------------------------------------------------------------------------------------------------------//
-    "remote_switch_funry_onebtn_1" : 
+    "remote_switch_funry_onebtn_4" :
+    {
+        "_comment":"grande chambre",
+        "protocol":             1,
+        "pulseLength":          350,
+        "SignalBitNumber":      24,
+        "signals":
+        {
+            "BTN_A":8845316,
+            "BTN_B":8845313,
+            "BTN_C":8845313,
+            "BTN_D":8845313
+        }
+    },
+    "remote_switch_funry_onebtn_2" :
+    {
+        "_comment":"petite chambre",
+        "protocol":                             1,
+        "pulseLength":                  350,
+        "SignalBitNumber":      24,
+        "signals":
+        {
+            "BTN_A":2121540,
+            "BTN_B":2121537,
+            "BTN_C":2121544,
+            "BTN_D":2121538
+        }
+    },
+    "remote_switch_funry_onebtn_1" :
     {
 		"protocol": 			1,
 		"pulseLength":			350,
 		"SignalBitNumber": 		24,
 		"signals":	{"BTN_A":1371208,"BTN_B":1371204,"BTN_C":1371201,"BTN_D":1371202}
 	},
-    "remote_switch_funry_3btn_1" : 
+    "remote_switch_funry_3btn_1" :
     {
 		"protocol": 			1,
 		"pulseLength":			350,
 		"SignalBitNumber": 		24,
        	"ZeroEncodingInNbPulse": 	[290,970],
-       	"OneEncodingInNbPulse": 	[970,290],		
+       	"OneEncodingInNbPulse": 	[970,290],
 		"signals":	{"BTN_A":3258520,"BTN_B":3258516,"BTN_C":3258514,"BTN_D":3258513}
 	},
 	//----------------------------------------------------------------------------------------------------------//
-  	"remote_switch_dio_by_chacon_salon_couloir" : 
+  	"remote_switch_dio_by_chacon_salon_couloir" :
     {
 		"protocol": 			3,
        	"startlock_highlow": 	[200,2810],
@@ -63,7 +91,7 @@
 		"PresendSignalCodeTransformation": "MANCHESTER",
 		"signals": {"ON1":[1,0,1,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,0,1,1,1,1,0,1,1,0,1,1,1,1], "OFF1":[1,0,1,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,0,1,1,1,1,0,1,1,1,1,1,1,1],
 					"ON2":[1,0,1,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,0,1,1,1,1,0,1,1,0,1,1,1,0], "OFF2":[1,0,1,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,0,1,1,1,1,0,1,1,1,1,1,1,0]}
-    },  
+    },
 	//----------------------------------------------------------------------------------------------------------//
     "remote_radiocommanded_chacon":
 	{
